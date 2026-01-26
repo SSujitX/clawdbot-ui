@@ -36,9 +36,9 @@ jobs:
     with:
       version: ${{ needs.setup.outputs.version }}
 
-  create-release:
+  upload-assets:
     needs: [setup, build-windows, build-macos]
-    uses: ./.github/workflows/create-release.yml
+    uses: ./.github/workflows/upload-assets.yml
     with:
       version: ${{ needs.setup.outputs.version }}
       tag_name: ${{ needs.setup.outputs.tag_name }}
