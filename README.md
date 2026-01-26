@@ -160,5 +160,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <p align="center">
+  <b>Made with ❤️ for developers who take control</b>
+</p>
+
+<p align="center">
+  <a href="https://www.star-history.com/#SSujitX/clawdbot-ui&Date">
+    <img src="https://api.star-history.com/svg?repos=SSujitX/clawdbot-ui&type=Date" width="500" alt="Star History">
+  </a>
+</p>
+
+<p align="center">
+  <img src="https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fgithub.com%2FSSujitX%2Fclawdbot-ui&countColor=%23263759" alt="Visitors">
+</p>
+
+---
+
+<p align="center">
   Made with ❤️ for the ClawdBot community
 </p>
+
