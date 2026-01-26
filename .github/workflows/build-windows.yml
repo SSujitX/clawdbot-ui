@@ -1,0 +1,44 @@
+name: Build Windows
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          pip install pyqt6 websockets nuitka imageio
+
+      - name: Build Windows executable
+        run: |
+          python -m nuitka --mode=onefile --enable-plugin=pyqt6 --windows-console-mode=disable --assume-yes-for-downloads --output-dir=build --output-file="ClawdBot-Control-Panel" main.py
+
+      - name: Rename executable
+        run: |
+          $version = "${{ inputs.version }}"
+          $oldPath = "build\ClawdBot-Control-Panel.exe"
+          $newPath = "build\ClawdBot-Control-Panel-v$version-Windows.exe"
+          Move-Item -Path $oldPath -Destination $newPath
+          echo "Renamed to: ClawdBot-Control-Panel-v$version-Windows.exe"
+        shell: pwsh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: build/*.exe
+          retention-days: 1
