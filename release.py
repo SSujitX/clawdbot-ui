@@ -253,71 +253,57 @@ def generate_changelog_entry(version: str, commits: List[Dict], previous_version
     return "\n".join(lines)
 
 
-def generate_full_changelog(new_version: str, new_entry: str) -> str:
-    """Generate complete CHANGELOG.md content from all git tags."""
-    content = ["# Changelog", "", "All notable changes to ClawdBot Control Panel will be documented in this file.", ""]
-    
-    # Add new version entry first
-    content.extend(new_entry.split('\n'))
-    content.append("")
-    
-    # Get all existing tags
+def get_version_from_pyproject() -> str:
+    """Get version from pyproject.toml."""
     try:
-        all_tags = run_command(["git", "tag", "-l", "--sort=-version:refname"])
-        tags = [t for t in all_tags.split('\n') if t.strip() and t.startswith('v')]
-    except:
-        tags = []
+        import tomllib
+    except ImportError:
+        import tomli as tomllib
     
-    # Generate entries for each existing tag
-    for tag in tags:
-        tag_version = tag.lstrip('v')
-        
-        # Get commits for this tag
-        try:
-            # Find previous tag
-            tag_index = tags.index(tag)
-            prev_tag = tags[tag_index + 1] if tag_index + 1 < len(tags) else None
-            
-            # Get commits between tags
-            if prev_tag:
-                commit_range = f"{prev_tag}..{tag}"
-            else:
-                # First tag, get all commits up to it
-                commit_range = tag
-            
-            commit_strings = run_command(["git", "log", commit_range, "--pretty=format:%H|%s|%b"]).split('\n')
-            commits = [parse_commit(c) for c in commit_strings if c]
-            commits = [c for c in commits if c]
-            
-            if commits:
-                # Generate entry for this version
-                tag_date = run_command(["git", "log", "-1", "--format=%ai", tag]).split()[0]
-                entry = generate_changelog_entry(tag_version, commits, prev_tag)
-                content.extend(entry.split('\n'))
-                content.append("")
-        except:
-            continue
+    pyproject_path = Path("pyproject.toml")
+    if not pyproject_path.exists():
+        print("❌ pyproject.toml not found!")
+        sys.exit(1)
     
-    return '\n'.join(content)
+    with open(pyproject_path, 'rb') as f:
+        data = tomllib.load(f)
+    
+    version = data.get("project", {}).get("version")
+    if not version:
+        print("❌ Version not found in pyproject.toml!")
+        sys.exit(1)
+    
+    return version
 
 
 def update_changelog(version: str, entry: str):
-    """Completely regenerate CHANGELOG.md file."""
+    """Replace CHANGELOG.md with only the current version."""
     changelog_path = Path("CHANGELOG.md")
     
-    # Generate complete changelog
-    full_content = generate_full_changelog(version, entry)
+    # Simple structure: header + current version only
+    content = [
+        "# Changelog",
+        "",
+        "All notable changes to ClawdBot Control Panel will be documented in this file.",
+        "",
+    ]
+    
+    content.extend(entry.split('\n'))
     
     # Write complete file
     with open(changelog_path, 'w', encoding='utf-8') as f:
-        f.write(full_content)
+        f.write('\n'.join(content))
     
-    print(f"✅ Completely regenerated CHANGELOG.md with version {version}")
+    print(f"✅ Updated CHANGELOG.md with version {version} (new commits only)")
 
 
 def main():
     """Main function."""
     print("🔍 Analyzing git commits...")
+    
+    # Get version from pyproject.toml
+    version = get_version_from_pyproject()
+    print(f"📦 Version from pyproject.toml: {version}")
     
     # Get latest tag
     latest_tag = get_latest_tag()
@@ -328,31 +314,29 @@ def main():
     
     if not commit_strings:
         print("⚠️  No new commits since last tag")
+        print(f"\n💡 Tip: Make some commits first, then run this script")
         return
     
-    print(f"📝 Found {len(commit_strings)} commits")
+    print(f"📝 Found {len(commit_strings)} new commits")
     
     # Parse commits
     commits = [parse_commit(c) for c in commit_strings]
     commits = [c for c in commits if c]  # Filter None
     
-    # Determine next version
-    next_version = get_next_version(latest_tag, commits)
-    print(f"🚀 Next version: {next_version}")
+    # Generate changelog entry for this version only
+    entry = generate_changelog_entry(version, commits, latest_tag)
     
-    # Generate changelog entry
-    entry = generate_changelog_entry(next_version, commits, latest_tag)
+    # Update CHANGELOG.md with just this version
+    update_changelog(version, entry)
     
-    # Update CHANGELOG.md
-    update_changelog(next_version, entry)
-    
-    print(f"\n✨ Done! Changelog updated with v{next_version}")
+    print(f"\n✨ Done! CHANGELOG.md updated with v{version}")
     print(f"\nNext steps:")
     print(f"1. Review CHANGELOG.md")
-    print(f"2. git add CHANGELOG.md")
-    print(f"3. git commit -m 'docs: update changelog for v{next_version}'")
-    print(f"4. git push")
-    print(f"5. Draft release will be auto-created!")
+    print(f"2. Update version in pyproject.toml if needed")
+    print(f"3. git add CHANGELOG.md pyproject.toml")
+    print(f"4. git commit -m 'chore: release v{version}'")
+    print(f"5. git push")
+    print(f"6. Draft release will be auto-created!")
 
 
 if __name__ == "__main__":
