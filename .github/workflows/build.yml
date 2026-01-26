@@ -30,39 +30,25 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install UV
-        uses: astral-sh/setup-uv@v4
-
       - name: Install dependencies
-        run: uv sync
+        run: |
+          pip install pyqt6 websockets nuitka imageio
 
       - name: Build with Nuitka (Windows)
         if: matrix.os == 'windows-latest'
-        uses: Nuitka/Nuitka-Action@main
-        with:
-          nuitka-version: main
-          script-name: main.py
-          mode: onefile
-          enable-plugins: pyqt6
-          windows-console-mode: disable
-          output-file: ClawdBot-Control-Panel-Windows
+        run: |
+          python -m nuitka --mode=onefile --enable-plugin=pyqt6 --windows-console-mode=disable --assume-yes-for-downloads --output-dir=build --output-file=ClawdBot-Control-Panel-Windows main.py
 
       - name: Build with Nuitka (macOS)
         if: matrix.os == 'macos-latest'
-        uses: Nuitka/Nuitka-Action@main
-        with:
-          nuitka-version: main
-          script-name: main.py
-          mode: app
-          enable-plugins: pyqt6
-          macos-app-icon: assets/clawdbot.png
-          output-file: ClawdBot-Control-Panel-macOS
+        run: |
+          python -m nuitka --mode=standalone --enable-plugin=pyqt6 --macos-create-app-bundle --macos-app-icon=assets/clawdbot.png --assume-yes-for-downloads --output-dir=build --output-file=ClawdBot-Control-Panel-macOS main.py
 
       - name: Zip macOS app
         if: matrix.os == 'macos-latest'
         run: |
           cd build
-          zip -r ClawdBot-Control-Panel-macOS.app.zip *.app
+          zip -r ClawdBot-Control-Panel-macOS.app.zip *.app || zip -r ClawdBot-Control-Panel-macOS.zip main.dist
 
       - name: Upload Windows Artifact
         if: matrix.os == 'windows-latest'
