@@ -43,8 +43,21 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           
-          # Extract content between this version and the next version header
-          RELEASE_NOTES=$(awk "/## v$VERSION/,/^## v[0-9]/" CHANGELOG.md | sed '1d;$d')
+          # Extract content between this version and the next version header (or end of file)
+          # First, try to find a second version header
+          NEXT_VERSION_LINE=$(grep -n "^## v[0-9]" CHANGELOG.md | grep -A 1 "^## v$VERSION" | tail -1 | cut -d: -f1)
+          CURRENT_VERSION_LINE=$(grep -n "^## v$VERSION" CHANGELOG.md | head -1 | cut -d: -f1)
+          
+          if [ -z "$NEXT_VERSION_LINE" ] || [ "$NEXT_VERSION_LINE" == "$CURRENT_VERSION_LINE" ]; then
+            # This is the last/only version, extract till end of file
+            RELEASE_NOTES=$(awk "/## v$VERSION/,EOF" CHANGELOG.md | tail -n +2)
+          else
+            # Extract between current and next version
+            RELEASE_NOTES=$(awk "/## v$VERSION/,/^## v[0-9]/" CHANGELOG.md | sed '1d;$d')
+          fi
+          
+          # Trim empty lines at start and end
+          RELEASE_NOTES=$(echo "$RELEASE_NOTES" | sed '/./,$!d' | sed -e :a -e '/^\s*$/d;N;ba')
           
           if [ -z "$RELEASE_NOTES" ]; then
             echo "No release notes found for v$VERSION!"
