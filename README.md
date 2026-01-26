@@ -1,6 +1,6 @@
 # ClawdBot Control Panel
 
-A modern, dark-themed desktop application for managing ClawdBot AI gateway service. Built with PyQt6 for Windows and macOS.
+A sleek desktop application for managing your ClawdBot AI gateway, skills, and commands. Built with PyQt6 for Windows and macOS.
 
 ![Python](https://img.shields.io/badge/Python-3.13+-blue?logo=python&logoColor=white)
 ![PyQt6](https://img.shields.io/badge/PyQt6-Desktop_App-green?logo=qt&logoColor=white)
