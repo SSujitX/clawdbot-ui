@@ -253,43 +253,66 @@ def generate_changelog_entry(version: str, commits: List[Dict], previous_version
     return "\n".join(lines)
 
 
+def generate_full_changelog(new_version: str, new_entry: str) -> str:
+    """Generate complete CHANGELOG.md content from all git tags."""
+    content = ["# Changelog", "", "All notable changes to ClawdBot Control Panel will be documented in this file.", ""]
+    
+    # Add new version entry first
+    content.extend(new_entry.split('\n'))
+    content.append("")
+    
+    # Get all existing tags
+    try:
+        all_tags = run_command(["git", "tag", "-l", "--sort=-version:refname"])
+        tags = [t for t in all_tags.split('\n') if t.strip() and t.startswith('v')]
+    except:
+        tags = []
+    
+    # Generate entries for each existing tag
+    for tag in tags:
+        tag_version = tag.lstrip('v')
+        
+        # Get commits for this tag
+        try:
+            # Find previous tag
+            tag_index = tags.index(tag)
+            prev_tag = tags[tag_index + 1] if tag_index + 1 < len(tags) else None
+            
+            # Get commits between tags
+            if prev_tag:
+                commit_range = f"{prev_tag}..{tag}"
+            else:
+                # First tag, get all commits up to it
+                commit_range = tag
+            
+            commit_strings = run_command(["git", "log", commit_range, "--pretty=format:%H|%s|%b"]).split('\n')
+            commits = [parse_commit(c) for c in commit_strings if c]
+            commits = [c for c in commits if c]
+            
+            if commits:
+                # Generate entry for this version
+                tag_date = run_command(["git", "log", "-1", "--format=%ai", tag]).split()[0]
+                entry = generate_changelog_entry(tag_version, commits, prev_tag)
+                content.extend(entry.split('\n'))
+                content.append("")
+        except:
+            continue
+    
+    return '\n'.join(content)
+
+
 def update_changelog(version: str, entry: str):
-    """Update CHANGELOG.md with new entry."""
+    """Completely regenerate CHANGELOG.md file."""
     changelog_path = Path("CHANGELOG.md")
     
-    # Read existing changelog (or create header)
-    if changelog_path.exists():
-        with open(changelog_path, 'r', encoding='utf-8') as f:
-            existing = f.read()
-    else:
-        existing = "# Changelog\n\nAll notable changes to ClawdBot Control Panel will be documented in this file.\n\n"
+    # Generate complete changelog
+    full_content = generate_full_changelog(version, entry)
     
-    # Find where to insert (after header, before first version)
-    lines = existing.split('\n')
-    insert_line = 0
-    
-    for i, line in enumerate(lines):
-        if line.startswith('## '):
-            insert_line = i
-            break
-        elif i > 0 and not line.strip():
-            insert_line = i + 1
-    
-    if insert_line == 0:
-        # No version found, append after header
-        for i, line in enumerate(lines):
-            if line.strip() and not line.startswith('#'):
-                insert_line = i
-                break
-    
-    # Insert new entry
-    new_lines = lines[:insert_line] + entry.split('\n') + [''] + lines[insert_line:]
-    
-    # Write back
+    # Write complete file
     with open(changelog_path, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(new_lines))
+        f.write(full_content)
     
-    print(f"✅ Updated CHANGELOG.md with version {version}")
+    print(f"✅ Completely regenerated CHANGELOG.md with version {version}")
 
 
 def main():
