@@ -1,6 +1,10 @@
-# ClawdBot Control Panel
+# 🦞 ClawdBot Control Panel
 
-A sleek desktop application for managing your ClawdBot AI gateway, skills, and commands. Built with PyQt6 for Windows and macOS.
+**Your ClawdBot command center. Start, stop, manage skills, run commands — all from one sleek desktop UI.**
+
+ClawdBot Control Panel is a native desktop application for managing your [ClawdBot](https://clawd.bot) AI gateway. Built with PyQt6, it works on Windows and macOS — giving you full control over your personal AI assistant without touching the terminal.
+
+[Website](https://clawdbot.com) · [Docs](https://docs.clawd.bot) · [Skills Hub](https://clawdhub.com/skills) · [Discord](https://discord.gg/clawd)
 
 ![Python](https://img.shields.io/badge/Python-3.13+-blue?logo=python&logoColor=white)
 ![PyQt6](https://img.shields.io/badge/PyQt6-Desktop_App-green?logo=qt&logoColor=white)
