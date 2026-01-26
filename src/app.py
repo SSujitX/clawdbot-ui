@@ -5,7 +5,6 @@ import os
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
-
 from src.ui.window import MainWindow, get_icon_path
 from src.ui.styles import DARK_THEME
 
