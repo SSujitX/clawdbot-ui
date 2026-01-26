@@ -1,17 +1,5 @@
 # Changelog
 
-All notable changes to ClawdBot Control Panel will be documented in this file.
-
-## v1.1.0 (2026-01-27)
-
-### Feat
-
-- auto-create draft release on every push from CHANGELOG.md
-
-### Fix
-
-- handle last version in CHANGELOG.md extraction
-
 ## v1.0.1 (2026-01-27)
 
 ### Feat
