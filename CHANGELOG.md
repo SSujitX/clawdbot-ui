@@ -2,7 +2,7 @@
 
 All notable changes to ClawdBot Control Panel will be documented in this file.
 
-## v1.1.0 (2026-01-27)
+## v1.0.0 (2026-01-27)
 
 ### Feat
 
