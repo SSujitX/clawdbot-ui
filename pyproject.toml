@@ -8,12 +8,3 @@ dependencies = [
     "pyqt6>=6.10.2",
     "websockets>=16.0",
 ]
-
-[tool.commitizen]
-name = "cz_conventional_commits"
-version = "1.0.0"
-version_files = [
-    "pyproject.toml:version"
-]
-tag_format = "v$version"
-update_changelog_on_bump = true

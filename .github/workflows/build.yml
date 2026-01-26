@@ -1,77 +1,211 @@
-name: Build & Release
+name: Build and Release
 
 on:
-  release:
-    types: [published]
-  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            artifact_name: ClawdBot-Control-Panel-Windows.exe
-          - os: macos-latest
-            artifact_name: ClawdBot-Control-Panel-macOS.app.zip
-
-    runs-on: ${{ matrix.os }}
-
-    permissions:
-      contents: write
-
+  build-windows:
+    runs-on: windows-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Install dependencies
         run: |
           pip install pyqt6 websockets nuitka imageio
 
-      - name: Build with Nuitka (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Extract version from tag
+        id: get_version
         run: |
-          python -m nuitka --mode=onefile --enable-plugin=pyqt6 --windows-console-mode=disable --assume-yes-for-downloads --output-dir=build --output-file=ClawdBot-Control-Panel-Windows main.py
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "Version: $version"
+        shell: pwsh
 
-      - name: Build with Nuitka (macOS)
-        if: matrix.os == 'macos-latest'
+      - name: Build Windows executable
         run: |
-          python -m nuitka --mode=standalone --enable-plugin=pyqt6 --macos-create-app-bundle --macos-app-icon=assets/clawdbot.png --assume-yes-for-downloads --output-dir=build --output-file=ClawdBot-Control-Panel-macOS main.py
+          python -m nuitka --mode=onefile --enable-plugin=pyqt6 --windows-console-mode=disable --assume-yes-for-downloads --output-dir=build --output-file="ClawdBot-Control-Panel" main.py
 
-      - name: Zip macOS app
-        if: matrix.os == 'macos-latest'
+      - name: Rename Windows executable
         run: |
-          cd build
-          zip -r ClawdBot-Control-Panel-macOS.app.zip *.app || zip -r ClawdBot-Control-Panel-macOS.zip main.dist
+          $version = "${{ steps.get_version.outputs.version }}"
+          $oldPath = "build\ClawdBot-Control-Panel.exe"
+          $newPath = "build\ClawdBot-Control-Panel-v$version-Windows.exe"
+          Move-Item -Path $oldPath -Destination $newPath
+          echo "Renamed to: ClawdBot-Control-Panel-v$version-Windows.exe"
+        shell: pwsh
 
-      - name: Upload Windows Artifact
-        if: matrix.os == 'windows-latest'
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build
+          name: windows-exe
           path: build/*.exe
 
-      - name: Upload macOS Artifact
-        if: matrix.os == 'macos-latest'
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          pip install pyqt6 websockets nuitka imageio
+
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          version="${{ github.ref_name }}"
+          version="${version#v}"
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "Version: $version"
+
+      - name: Build macOS app
+        run: |
+          python -m nuitka --mode=standalone --enable-plugin=pyqt6 --macos-create-app-bundle --macos-app-icon=assets/clawdbot.png --assume-yes-for-downloads --output-dir=build --output-file="ClawdBot-Control-Panel" main.py
+
+      - name: Create macOS zip
+        run: |
+          version="${{ steps.get_version.outputs.version }}"
+          cd build
+          zip -r "ClawdBot-Control-Panel-v$version-macOS.zip" *.app || zip -r "ClawdBot-Control-Panel-v$version-macOS.zip" main.dist
+          echo "Created: ClawdBot-Control-Panel-v$version-macOS.zip"
+
+      - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: macos-build
+          name: macos-app
           path: build/*.zip
 
-      - name: Upload to Release (Windows)
-        if: matrix.os == 'windows-latest' && github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
+  create-release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          files: build/*.exe
+          fetch-depth: 0
 
-      - name: Upload to Release (macOS)
-        if: matrix.os == 'macos-latest' && github.event_name == 'release'
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          version="${{ github.ref_name }}"
+          version="${version#v}"
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "Version: $version"
+
+      - name: Get previous tag
+        id: get_previous_tag
+        run: |
+          currentTag="${{ github.ref_name }}"
+          previousTag=$(git tag --sort=-version:refname | grep -v "$currentTag" | head -n 1)
+          if [ -n "$previousTag" ]; then
+            echo "previous_tag=$previousTag" >> $GITHUB_OUTPUT
+            echo "Previous tag: $previousTag"
+          else
+            echo "previous_tag=" >> $GITHUB_OUTPUT
+            echo "No previous tag found"
+          fi
+
+      - name: Extract release notes from CHANGELOG
+        id: get_release_notes
+        run: |
+          version="${{ steps.get_version.outputs.version }}"
+          
+          if [ -f "CHANGELOG.md" ]; then
+            # Extract the section for this version
+            releaseNotes=$(awk "/## v$version/,/## v/" CHANGELOG.md | sed '1d;$d')
+            
+            if [ -n "$releaseNotes" ]; then
+              echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+              echo "$releaseNotes" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+              echo "Successfully extracted release notes for version $version"
+            else
+              defaultNotes="## What's New
+          - Latest version of ClawdBot Control Panel
+          - Bug fixes and improvements"
+              echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+              echo "$defaultNotes" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+              echo "Could not find specific version notes, using default"
+            fi
+          else
+            defaultNotes="## What's New
+          - Latest version of ClawdBot Control Panel
+          - Bug fixes and improvements"
+            echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+            echo "$defaultNotes" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "CHANGELOG.md not found, using default"
+          fi
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-exe
+          path: dist/
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-app
+          path: dist/
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: build/*.zip
+          tag_name: ${{ github.ref_name }}
+          name: 🦞 ClawdBot Control Panel ${{ github.ref_name }}
+          body: |
+            ${{ steps.get_release_notes.outputs.release_notes }}
+
+            ## 📥 Downloads
+
+            Choose the version for your platform:
+            - **Windows**: ClawdBot-Control-Panel-v${{ steps.get_version.outputs.version }}-Windows.exe
+            - **macOS**: ClawdBot-Control-Panel-v${{ steps.get_version.outputs.version }}-macOS.zip
+
+            ## 💻 System Requirements
+
+            **Windows**:
+            - Windows 10/11 (64-bit)
+            - No additional dependencies required
+
+            **macOS**:
+            - macOS 11.0+
+            - Extract .zip and run the .app
+
+            ## 🚀 Quick Start
+
+            1. Download the file for your platform
+            2. **Windows**: Run the .exe file
+            3. **macOS**: Extract .zip and open the .app
+            4. Control your ClawdBot gateway from the UI
+
+            ---
+
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.get_previous_tag.outputs.previous_tag }}...${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: |
+            dist/*.exe
+            dist/*.zip
+          fail_on_unmatched_files: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
