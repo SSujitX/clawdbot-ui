@@ -2,8 +2,8 @@ name: Auto-Create Draft Release
 
 on:
   push:
-    tags:
-      - 'v*'  # Triggers on version tags like v1.0.0, v1.2.3, etc.
+    branches:
+      - master  # Triggers on every push to master
 
 permissions:
   contents: write
@@ -17,45 +17,50 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extract version from tag
+      - name: Extract latest version from CHANGELOG
         id: version
         run: |
-          TAG_NAME="${{ github.ref_name }}"
-          VERSION="${TAG_NAME#v}"
+          if [ ! -f "CHANGELOG.md" ]; then
+            echo "CHANGELOG.md not found!"
+            exit 1
+          fi
+          
+          # Extract the first version header (latest version)
+          VERSION=$(grep -m 1 "^## v" CHANGELOG.md | sed 's/^## v\([0-9.]*\).*/\1/')
+          
+          if [ -z "$VERSION" ]; then
+            echo "No version found in CHANGELOG.md!"
+            exit 1
+          fi
+          
+          TAG_NAME="v$VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Found version: $VERSION (tag: $TAG_NAME)"
 
       - name: Extract release notes from CHANGELOG
         id: changelog
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           
-          if [ -f "CHANGELOG.md" ]; then
-            # Extract content between this version and the next (or end of file)
-            # Using awk to get content between version headers
-            RELEASE_NOTES=$(awk "/## v$VERSION/,/## v[0-9]/" CHANGELOG.md | sed '1d;$d' | sed '/^$/d')
-            
-            if [ -z "$RELEASE_NOTES" ]; then
-              # Fallback if extraction fails
-              RELEASE_NOTES="## What's New in v$VERSION
-
-          Check the [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md) for details."
-            fi
-            
-            # Save to output using heredoc
-            {
-              echo 'notes<<EOF'
-              echo "$RELEASE_NOTES"
-              echo 'EOF'
-            } >> $GITHUB_OUTPUT
-            
-            echo "Successfully extracted release notes for v$VERSION"
-          else
-            echo "CHANGELOG.md not found!"
+          # Extract content between this version and the next version header
+          RELEASE_NOTES=$(awk "/## v$VERSION/,/^## v[0-9]/" CHANGELOG.md | sed '1d;$d')
+          
+          if [ -z "$RELEASE_NOTES" ]; then
+            echo "No release notes found for v$VERSION!"
             exit 1
           fi
+          
+          # Save to output using heredoc
+          {
+            echo 'notes<<EOF'
+            echo "$RELEASE_NOTES"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+          
+          echo "Successfully extracted release notes for v$VERSION"
 
-      - name: Create draft release
+      - name: Create or update draft release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
