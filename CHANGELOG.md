@@ -6,6 +6,7 @@ All notable changes to ClawdBot Control Panel will be documented in this file.
 
 ### Feat
 
+- fixed github actions release workflow
 - add main entry point for launching ClawdBot UI
 - add application entry point with PyQt6 setup
 - **core**: add non-blocking command runner with real-time output streaming
