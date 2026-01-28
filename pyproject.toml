@@ -7,5 +7,6 @@ requires-python = ">=3.13"
 dependencies = [
     "pyinstaller>=6.18.0",
     "pyqt6>=6.10.2",
+    "tomli>=2.4.0",
     "websockets>=16.0",
 ]
