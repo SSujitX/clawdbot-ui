@@ -26,8 +26,8 @@ jobs:
           fi
           
           # Extract the first version header (latest version)
-          # Matches "## v1.0.0", "## [1.0.0]", "## 1.0.0" etc.
-          VERSION=$(grep -m 1 "^## " CHANGELOG.md | sed -E 's/^## \[?v?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          # Matches "## v1.0.0", "## [2.1]", "## 5.25.23" etc.
+          VERSION=$(grep -m 1 "^## " CHANGELOG.md | sed -E 's/^## \[?v?([0-9]+(\.[0-9]+)+).*/\1/')
           
           if [ -z "$VERSION" ]; then
             echo "No version found in CHANGELOG.md!"
