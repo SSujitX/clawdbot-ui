@@ -25,7 +25,7 @@ jobs:
 
       - name: Build Windows executable
         run: |
-          python -m nuitka --mode=onefile --enable-plugin=pyqt6 --windows-console-mode=disable --windows-icon-from-ico=assets/clawdbot.png --assume-yes-for-downloads --output-dir=build --output-file="ClawdBot-Control-Panel" main.py
+          python -m nuitka --mode=onefile --enable-plugin=pyqt6 --windows-console-mode=disable --windows-icon-from-ico=assets/clawdbot.png --include-data-dir=assets=assets --assume-yes-for-downloads --output-dir=build --output-file="ClawdBot-Control-Panel" main.py
 
       - name: Rename executable
         run: |
