@@ -26,7 +26,8 @@ jobs:
           fi
           
           # Extract the first version header (latest version)
-          VERSION=$(grep -m 1 "^## v" CHANGELOG.md | sed 's/^## v\([0-9.]*\).*/\1/')
+          # Matches "## v1.0.0", "## [1.0.0]", "## 1.0.0" etc.
+          VERSION=$(grep -m 1 "^## " CHANGELOG.md | sed -E 's/^## \[?v?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
           
           if [ -z "$VERSION" ]; then
             echo "No version found in CHANGELOG.md!"
@@ -43,17 +44,26 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           
-          # Extract content between this version and the next version header (or end of file)
-          # First, try to find a second version header
-          NEXT_VERSION_LINE=$(grep -n "^## v[0-9]" CHANGELOG.md | grep -A 1 "^## v$VERSION" | tail -1 | cut -d: -f1)
-          CURRENT_VERSION_LINE=$(grep -n "^## v$VERSION" CHANGELOG.md | head -1 | cut -d: -f1)
+          # Find the line number of the current version header
+          CURRENT_VERSION_LINE=$(grep -n "^## .*$VERSION" CHANGELOG.md | head -1 | cut -d: -f1)
           
-          if [ -z "$NEXT_VERSION_LINE" ] || [ "$NEXT_VERSION_LINE" == "$CURRENT_VERSION_LINE" ]; then
-            # This is the last/only version, extract till end of file
-            RELEASE_NOTES=$(awk "/## v$VERSION/,EOF" CHANGELOG.md | tail -n +2)
+          if [ -z "$CURRENT_VERSION_LINE" ]; then
+            echo "Could not locate version $VERSION in CHANGELOG.md"
+            exit 1
+          fi
+
+          # Find the line number of the NEXT version header (starting from line after current)
+          # We look for any line starting with "## " followed by a number or bracket+number
+          NEXT_VERSION_LINE=$(tail -n +$((CURRENT_VERSION_LINE + 1)) CHANGELOG.md | grep -n "^## " | head -1 | cut -d: -f1)
+          
+          if [ -z "$NEXT_VERSION_LINE" ]; then
+            # No next version found, extract until end of file
+            RELEASE_NOTES=$(tail -n +$((CURRENT_VERSION_LINE + 1)) CHANGELOG.md)
           else
-            # Extract between current and next version
-            RELEASE_NOTES=$(awk "/## v$VERSION/,/^## v[0-9]/" CHANGELOG.md | sed '1d;$d')
+            # Calculate real line number of next version
+            REAL_NEXT_LINE=$((CURRENT_VERSION_LINE + NEXT_VERSION_LINE))
+            # Extract content between current and next version
+            RELEASE_NOTES=$(sed -n "$((CURRENT_VERSION_LINE + 1)),$((REAL_NEXT_LINE - 1))p" CHANGELOG.md)
           fi
           
           # Trim empty lines at start and end
