@@ -21,7 +21,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pyqt6 websockets pyinstaller
+          pip install pyqt6 websockets pyinstaller pillow
 
       - name: Build Windows executable
         run: |
