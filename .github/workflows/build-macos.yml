@@ -21,17 +21,18 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pyqt6 websockets nuitka imageio
+          pip install pyqt6 websockets pyinstaller
 
       - name: Build macOS app
         run: |
-          python -m nuitka --mode=app --enable-plugin=pyqt6 --macos-app-icon=assets/clawdbot.png --include-data-dir=assets=assets --assume-yes-for-downloads --output-dir=build --output-file="ClawdBot-Control-Panel" main.py
+          # Use PyInstaller for macOS as Nuitka has issues with PyQt6 on Mac
+          pyinstaller --name "ClawdBot-Control-Panel" --windowed --icon="assets/clawdbot.png" --add-data="assets:assets" --noconfirm --clean main.py
 
       - name: Create macOS zip
         run: |
           version="${{ inputs.version }}"
-          cd build
-          zip -r "ClawdBot-Control-Panel-v$version-macOS.zip" *.app || zip -r "ClawdBot-Control-Panel-v$version-macOS.zip" main.dist
+          cd dist
+          zip -r "ClawdBot-Control-Panel-v$version-macOS.zip" "ClawdBot-Control-Panel.app"
           echo "Created: ClawdBot-Control-Panel-v$version-macOS.zip"
 
       - name: Upload artifact
