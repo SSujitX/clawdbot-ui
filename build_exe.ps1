@@ -8,16 +8,15 @@ if (Test-Path "dist") { Remove-Item -Path "dist" -Recurse -Force | Out-Null }
 # Create dist directory
 New-Item -ItemType Directory -Force -Path "dist" | Out-Null
 
-# Run Nuitka build
-uv run python -m nuitka `
-    --mode=onefile `
-    --enable-plugin=pyqt6 `
-    --windows-console-mode=disable `
-    --windows-icon-from-ico=assets/clawdbot.png `
-    --include-data-dir=assets=assets `
-    --assume-yes-for-downloads `
-    --output-dir=dist `
-    --output-file="ClawdBot-Control-Panel" `
+# Run PyInstaller build
+uv run pyinstaller `
+    --name "ClawdBot-Control-Panel" `
+    --onefile `
+    --windowed `
+    --icon="assets/clawdbot.png" `
+    --add-data="assets;assets" `
+    --noconfirm `
+    --clean `
     main.py
 
 if ($LASTEXITCODE -eq 0) {
