@@ -65,6 +65,9 @@ class MainWindow(QMainWindow):
         self.version_status = None
         self.loading_overlay = None
         self._silent_check = False  # Track if version check should be silent
+        self._gateway_manually_started = (
+            False  # Track if we started the gateway ourselves
+        )
         self._setup_window()
         self._setup_ui()
         self._show_loading_overlay()
@@ -897,6 +900,16 @@ class MainWindow(QMainWindow):
         self.version_status = status
         silent = self._silent_check  # Get silent flag from instance variable
 
+        # If we manually started the gateway and it's running, don't update UI
+        # (the _on_gateway_started callback already handled it)
+        if (
+            self._gateway_manually_started
+            and self.gateway_runner
+            and self.gateway_runner.isRunning()
+        ):
+            if silent:
+                return  # Skip UI updates, gateway is running from our manual start
+
         if not status["is_installed"]:
             self.status_label.setText("Not installed")
             self.indicator.setText("● Not Installed")
@@ -1036,7 +1049,13 @@ class MainWindow(QMainWindow):
 
     def _on_start(self):
         self.terminal.log("Starting gateway...")
+
+        # Set starting state UI
         self.start_btn.setEnabled(False)
+        self.start_btn.setText("Starting...")
+        self.stop_btn.setEnabled(False)
+
+        self.status_label.setText("Starting...")
         self.indicator.setText("● Starting...")
         self.indicator.setStyleSheet(
             """
@@ -1049,6 +1068,14 @@ class MainWindow(QMainWindow):
         """
         )
 
+        # Hide action buttons until started
+        self.open_btn.setVisible(False)
+        self.open_ui_btn.setVisible(False)
+        self.quick_stop_btn.setVisible(False)
+
+        # Mark that we're starting the gateway manually
+        self._gateway_manually_started = True
+
         self.gateway_runner = ProcessRunner(get_gateway_command())
         self.gateway_runner.output.connect(self.terminal.log)
         self.gateway_runner.error.connect(lambda e: self.terminal.log(f"Error: {e}"))
@@ -1057,23 +1084,47 @@ class MainWindow(QMainWindow):
         self.gateway_runner.start()
 
     def _on_gateway_started(self):
-        self.status_label.setText("Gateway Running")
-        self.indicator.setText("● Running")
-        self.indicator.setStyleSheet(
+        """Called when gateway process successfully starts"""
+        try:
+            port = 18789
+
+            self.terminal.log(f"✓ Gateway started on ws://127.0.0.1:{port}")
+
+            # Update sidebar status
+            self.status_label.setText(f"Running on port {port}")
+
+            # Update main indicator
+            self.indicator.setText("● Running")
+            self.indicator.setStyleSheet(
+                """
+                color: #4ade80;
+                font-weight: 600;
+                font-size: 12px;
+                background-color: rgba(34, 197, 94, 0.15);
+                padding: 5px 12px;
+                border-radius: 4px;
             """
-            color: #4ade80;
-            font-weight: 600;
-            font-size: 12px;
-            background-color: rgba(34, 197, 94, 0.15);
-            padding: 5px 12px;
-            border-radius: 4px;
-        """
-        )
-        self.stop_btn.setEnabled(True)
-        self.quick_stop_btn.setVisible(True)
-        self.open_btn.setVisible(True)
-        self.terminal.log("✓ Gateway started on ws://127.0.0.1:18789")
-        self.terminal.log("━" * 60)
+            )
+
+            # Update button states for running gateway
+            self.start_btn.setEnabled(False)
+            self.start_btn.setText("Running")
+            self.stop_btn.setEnabled(True)
+            self.stop_btn.setVisible(True)
+            self.quick_stop_btn.setVisible(True)
+            self.open_btn.setVisible(True)
+            self.open_ui_btn.setVisible(True)
+
+            # Update Settings page
+            if hasattr(self, "settings_gateway"):
+                self.settings_gateway.setText(f"Gateway: Running on port {port}")
+
+            self.terminal.log("━" * 60)
+        except Exception as e:
+            self.terminal.log(f"❌ Error in _on_gateway_started: {e}")
+            import traceback
+
+            self.terminal.log(traceback.format_exc())
 
     def _on_stop(self):
         self.terminal.log("⋯ Stopping gateway...")
@@ -1148,6 +1199,9 @@ class MainWindow(QMainWindow):
         )
         self.terminal.log("━" * 60)
 
+        # Reset manual start flag
+        self._gateway_manually_started = False
+
         # Re-enable the quick stop button in case we need to check it again
         self.quick_stop_btn.setEnabled(True)
 
@@ -1180,6 +1234,9 @@ class MainWindow(QMainWindow):
         # This is called when the gateway process we started exits
         self.terminal.log(f"Gateway process exited (code: {exit_code})")
         self.terminal.log("━" * 60)
+
+        # Reset manual start flag
+        self._gateway_manually_started = False
 
         # Update UI to show stopped state immediately
         self.indicator.setText("● Stopped")
