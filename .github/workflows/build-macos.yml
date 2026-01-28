@@ -25,7 +25,7 @@ jobs:
 
       - name: Build macOS app
         run: |
-          python -m nuitka --mode=app --enable-plugin=pyqt6 --macos-app-icon=assets/clawdbot.png --assume-yes-for-downloads --output-dir=build --output-file="ClawdBot-Control-Panel" main.py
+          python -m nuitka --mode=app --enable-plugin=pyqt6 --macos-app-icon=assets/clawdbot.png --include-data-dir=assets=assets --assume-yes-for-downloads --output-dir=build --output-file="ClawdBot-Control-Panel" main.py
 
       - name: Create macOS zip
         run: |
