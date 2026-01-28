@@ -1,6 +1,7 @@
 # Main window - ClawdBot control panel UI
 
 import os
+import sys
 from PyQt6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -25,6 +26,25 @@ from src.utils.platform import get_gateway_command, get_install_command, is_wind
 
 def get_icon_path():
     """Get the path to the ClawdBot icon"""
+    # Check if running as compiled executable (Nuitka/PyInstaller)
+    if hasattr(sys, "frozen"):
+        # If onefile, the icon should be in the temp directory (sys._MEIPASS) 
+        # But Nuitka might just copy it to the dist folder or embed it
+        if hasattr(sys, "_MEIPASS"):
+             base_dir = sys._MEIPASS
+        else:
+             base_dir = os.path.dirname(sys.executable)
+             
+        # Check potential locations in frozen mode
+        candidates = [
+            os.path.join(base_dir, "assets", "clawdbot.png"),
+            os.path.join(base_dir, "clawdbot.png")
+        ]
+        for candidate in candidates:
+            if os.path.exists(candidate):
+                return candidate
+                
+    # Development mode logic
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     return os.path.join(base_dir, "assets", "clawdbot.png")
 
