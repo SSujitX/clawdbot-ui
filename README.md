@@ -82,6 +82,23 @@ pip install -r requirements.txt
 python main.py
 ```
 
+## 🛠️ Building Locally
+
+To build a standalone executable for Windows (with the application icon):
+
+1. **Install Build Dependencies**:
+   ```bash
+   uv add nuitka imageio
+   ```
+
+2. **Run the Build Script**:
+   ```powershell
+   ./build_exe.ps1
+   ```
+
+   This will generate a single-file executable in the `dist/` directory:
+   `dist/ClawdBot-Control-Panel.exe`
+
 ## 📖 Usage
 
 ### Starting the Gateway
