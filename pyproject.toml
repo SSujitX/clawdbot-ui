@@ -1,6 +1,6 @@
 [project]
 name = "clawdbot-ui"
-version = "1.0.1"
+version = "1.0.2"
 description = "ClawdBot Control Panel - Start, stop, and manage ClawdBot gateway"
 readme = "README.md"
 requires-python = ">=3.13"
