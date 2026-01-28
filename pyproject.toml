@@ -1,10 +1,11 @@
 [project]
 name = "clawdbot-ui"
-version = "1.0.2"
+version = "1.0.3"
 description = "ClawdBot Control Panel - Start, stop, and manage ClawdBot gateway"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "pillow>=11.1.0",
     "pyinstaller>=6.18.0",
     "pyqt6>=6.10.2",
     "tomli>=2.4.0",
