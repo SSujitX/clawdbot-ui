@@ -21,17 +21,18 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pyqt6 websockets nuitka imageio
+          pip install pyqt6 websockets pyinstaller
 
       - name: Build Windows executable
         run: |
-          python -m nuitka --mode=onefile --enable-plugin=pyqt6 --windows-console-mode=disable --windows-icon-from-ico=assets/clawdbot.png --include-data-dir=assets=assets --assume-yes-for-downloads --output-dir=build --output-file="ClawdBot-Control-Panel" main.py
+          # Use PyInstaller with ; separator for add-data on Windows
+          pyinstaller --name "ClawdBot-Control-Panel" --onefile --windowed --icon="assets/clawdbot.png" --add-data="assets;assets" --noconfirm --clean main.py
 
       - name: Rename executable
         run: |
           $version = "${{ inputs.version }}"
-          $oldPath = "build\ClawdBot-Control-Panel.exe"
-          $newPath = "build\ClawdBot-Control-Panel-v$version-Windows.exe"
+          $oldPath = "dist\ClawdBot-Control-Panel.exe"
+          $newPath = "dist\ClawdBot-Control-Panel-v$version-Windows.exe"
           Move-Item -Path $oldPath -Destination $newPath
           echo "Renamed to: ClawdBot-Control-Panel-v$version-Windows.exe"
         shell: pwsh
@@ -40,5 +41,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-exe
-          path: build/*.exe
+          path: dist/*.exe
           retention-days: 1
