@@ -17,6 +17,7 @@ All notable changes to ClawdBot Control Panel will be documented in this file.
 
 ### 📝 Documentation
 
+* update CHANGELOG.md for release 1.0.1 ([457d9f0](https://github.com/SSujitX/clawdbot-ui/commit/457d9f06014899a6e272a68b23ecb6b8a9ee5793))
 * add build instructions for standalone Windows executable ([f6d80be](https://github.com/SSujitX/clawdbot-ui/commit/f6d80bec00aa9a1f29109335df9c23a080e9e3b0))
 * update CHANGELOG.md format and content for release automation ([b30c4ad](https://github.com/SSujitX/clawdbot-ui/commit/b30c4ad79784c98a546cf7359ac7ca988bea1c81))
 
@@ -35,6 +36,8 @@ All notable changes to ClawdBot Control Panel will be documented in this file.
 
 ### 💚 Continuous Integration
 
+* **release**: update changelog version regex to support flexible version formats ([e8c1e98](https://github.com/SSujitX/clawdbot-ui/commit/e8c1e98a783062fd8554bb089baf806a2994d6ce))
+* improve CHANGELOG parsing for release notes ([34fb8df](https://github.com/SSujitX/clawdbot-ui/commit/34fb8df5492d9fb8819be29af0670496f86bd93c))
 * **build-windows**: include assets directory in Nuitka build ([015b494](https://github.com/SSujitX/clawdbot-ui/commit/015b4948d1bf1e3e4e5aefd69d048740077e13a1))
 * include assets directory in macOS build ([1f02c62](https://github.com/SSujitX/clawdbot-ui/commit/1f02c623e576fcac5dac0c84b6d4dc2d42eb90db))
 * add icon to Windows executable build ([cb13c91](https://github.com/SSujitX/clawdbot-ui/commit/cb13c918dc41e1bb5e09fe38a0465b73431df8d9))
