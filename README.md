@@ -11,9 +11,14 @@ ClawdBot Control Panel is a native desktop application for managing your [ClawdB
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
+## 📸 Preview
+
+![ClawdBot Control Panel](screenshot/screenshot1.png)
+
 ## ✨ Features
 
 ### 🎛️ Gateway Control
+
 - **Start/Stop Service** - One-click gateway management
 - **Real-time Logs** - Live streaming of gateway output
 - **Status Monitoring** - Visual indicators (Running/Stopped/Not Installed)
@@ -21,23 +26,27 @@ ClawdBot Control Panel is a native desktop application for managing your [ClawdB
 - **Open Dashboard** - Launch web UI with authentication token
 
 ### 📦 ClawdHub Skills Manager
+
 - **Install Skills** - Humanizer, self-improving-agent, and more
 - **Skills Management** - View and manage installed skills
 - **Open Skills Folder** - Direct access to skills directory
 - **Update/Uninstall** - Full lifecycle management
 
 ### 💻 Admin Terminal
+
 - **Run Any Command** - Execute with admin privileges
 - **PowerShell Integration** - UAC elevation on Windows
 - **Real-time Output** - Live command streaming
 - **Copy/Clear Logs** - Easy log management
 
 ### ⚙️ Settings & Maintenance
+
 - **Version Info** - Current and latest version display
 - **Check Updates** - One-click update checking
 - **Reset/Uninstall** - Maintenance operations
 
 ### 🎨 Modern UI
+
 - **Dark Theme** - Easy on the eyes
 - **Sidebar Navigation** - Dashboard, ClawdHub, Terminal, Settings
 - **Quick Links** - Skills Hub & Documentation
@@ -87,11 +96,13 @@ python main.py
 To build a standalone executable for Windows (with the application icon):
 
 1. **Install Build Dependencies**:
+
    ```bash
-   uv add nuitka imageio
+   uv add pyinstaller
    ```
 
 2. **Run the Build Script**:
+
    ```powershell
    ./build_exe.ps1
    ```
@@ -129,13 +140,13 @@ To build a standalone executable for Windows (with the application icon):
 
 ## 🛠️ Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| UI Framework | PyQt6 |
-| Package Manager | UV |
-| Language | Python 3.13+ |
-| Styling | Custom Dark Theme CSS |
-| Process Management | QThread + subprocess |
+| Component          | Technology            |
+| ------------------ | --------------------- |
+| UI Framework       | PyQt6                 |
+| Package Manager    | UV                    |
+| Language           | Python 3.13+          |
+| Styling            | Custom Dark Theme CSS |
+| Process Management | QThread + subprocess  |
 
 ## 📁 Project Structure
 
@@ -199,4 +210,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <p align="center">
   Made with ❤️ for the ClawdBot community
 </p>
-
