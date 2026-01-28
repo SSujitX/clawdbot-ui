@@ -5,6 +5,8 @@ description = "ClawdBot Control Panel - Start, stop, and manage ClawdBot gateway
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "imageio>=2.37.2",
+    "nuitka>=2.8.10",
     "pyqt6>=6.10.2",
     "websockets>=16.0",
 ]
